@@ -196,7 +196,7 @@ void CmfcExamPjDlg::OnBnClickedBtnExcute() //실행 버튼 클릭 시
 void CmfcExamPjDlg::movingCircle(int nX1, int nY1, int nX2, int nY2, int nRadius, int nTermX, int nTermY)
 {
 	m_pImgDlg->m_nRadius = nRadius; //반지름 저장
-	if (nX1 > nX2) nTermX = -nTermX; 
+	if (nX1 > nX2) nTermX = -nTermX;
 	if (nY1 > nY2) nTermY = -nTermY;
 	for (int i = nX1, j = nY1;;) {
 		if (isInArea(i, j, nRadius)) //원 안잘리게 하기 위한 조건 검사
@@ -224,7 +224,7 @@ bool CmfcExamPjDlg::isInArea(int nX, int nY, int nRadius)
 //범위 안인지 검사
 bool CmfcExamPjDlg::isInScope(int i, int nX, int nTerm)
 {
-	return (nTerm > 0) ? (i < nX + nTerm) : (i > nX + nTerm);
+	return (nTerm > 0) ? (i < nX ) : (i > nX );
 }
 
 bool CmfcExamPjDlg::isValidX(int x, int nRadius)
