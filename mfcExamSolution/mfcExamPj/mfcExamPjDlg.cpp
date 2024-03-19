@@ -182,29 +182,35 @@ void CmfcExamPjDlg::OnBnClickedBtnExcute() //실행 버튼 클릭 시
 	int nY1 = GetDlgItemInt(IDC_EDIT_Y1);
 	int nX2 = GetDlgItemInt(IDC_EDIT_X2);
 	int nY2 = GetDlgItemInt(IDC_EDIT_Y2);
-	if (!isValidX(nX1) || !isValidX(nX2) || !isValidY(nY1) || !isValidY(nY2)) return; //잘못된값 입력
 	int nRadius = GetDlgItemInt(IDC_EDIT_RADIUS);
 	if (nRadius < 5) nRadius = 5; //반지름 디폴트 길이 5
-	int nTerm = 10; //이동 간격
+	if (!isValidX(nX1,nRadius) || !isValidX(nX2, nRadius) || !isValidY(nY1, nRadius) || !isValidY(nY2, nRadius)) return; //잘못된값 입력하면 반응없음
+	//int nTerm = 10; //이동 간격
+	//이동 간격이 x와 y따로 있어야 다양하게 이동 가능하다!
+	int nTermX = 10;
+	int nTermY = 10;
 
-	movingCircle(nTerm, nX1, nY1, nX2, nY2, nRadius); //움직이는 원그리기
+	movingCircle(nX1, nY1, nX2, nY2, nRadius, nTermX, nTermY); //움직이는 원그리기
 }
 //움직이는 원 그리기
-void CmfcExamPjDlg::movingCircle(int nTerm, int nX1, int nY1, int nX2, int nY2, int nRadius)
+void CmfcExamPjDlg::movingCircle(int nX1, int nY1, int nX2, int nY2, int nRadius, int nTermX, int nTermY)
 {
-	if (nX1 > nX2) nTerm = -nTerm;
+	m_pImgDlg->m_nRadius = nRadius; //반지름 저장
+	if (nX1 > nX2) nTermX = -nTermX; 
+	if (nY1 > nY2) nTermY = -nTermY;
 	for (int i = nX1, j = nY1;;) {
 		if (isInArea(i, j, nRadius)) //원 안잘리게 하기 위한 조건 검사
-			m_pImgDlg->drawCircle(i, j, nRadius); //해당 좌표에 원그리기
+			m_pImgDlg->drawCircle(i, j); //해당 좌표에 원그리기
 		if (i == nX2 && j == nY2) break; //목적지 좌표면 반복문 탈출
 		
-		if (isInScope(i,nX2,nTerm)) i += nTerm;
+		if (isInScope(i,nX2,nTermX)) i += nTermX;
 		else i = nX2; //범위 넘어가면 목적지 좌표
-		if (isInScope(j,nY2,nTerm)) j += nTerm;
+		if (isInScope(j,nY2,nTermY)) j += nTermY;
 		else j = nY2; //범위 넘어가면 목적지 좌표
 	}
 
-	LoadRandomIMG(nX1, nY1, nX2, nY2, nRadius, nTerm);
+	//LoadRandomIMG(nX1, nY1, nX2, nY2, nRadius, nTerm);
+	m_pImgDlg->loadImage();
 }
 //원의 중심이 유효 영역 안에 있는지 검사
 bool CmfcExamPjDlg::isInArea(int nX, int nY, int nRadius)
@@ -218,34 +224,16 @@ bool CmfcExamPjDlg::isInArea(int nX, int nY, int nRadius)
 //범위 안인지 검사
 bool CmfcExamPjDlg::isInScope(int i, int nX, int nTerm)
 {
-	return (nTerm > 0) ? (i < nX - nTerm) : (i > nX - nTerm);
+	return (nTerm > 0) ? (i < nX + nTerm) : (i > nX + nTerm);
 }
-//랜덤하게 이미지 로드
-void CmfcExamPjDlg::LoadRandomIMG(int nX1, int nY1, int nX2, int nY2,int nRadius, int nTerm)
-{
-	int nInterval, nRNum, nCenterX, nCenterY; //변수 선언
-	//랜덤 이미지 로드 - 랜덤 좌표 값의 이미지 로드
-	do {
-		srand((unsigned int)time(NULL)); //랜덤 시드값 초기화
-		nInterval = abs(nX2 - nX1) < abs(nY2 - nY1) ? abs(nX2 - nX1) : abs(nY2 - nY1); //각 좌표 차이중 적은 것 기준으로
-		if (nInterval == 0) { nCenterX = nX1; nCenterY = nY1; break; }
-		nRNum = (rand() % nInterval / abs(nTerm)) * abs(nTerm); //랜덤 난수 생성(nTerm단위로)
-		if (nX1 > nX2)  nRNum = -nRNum;
-		nCenterX = nX1 + nRNum;
-		if (!isInScope(nCenterX, nX2, nTerm)) nCenterX = nX1; //범위 밖이면 시작 좌표
-		nCenterY = nY1 + nRNum;
-		if (!isInScope(nCenterY, nY2, nTerm)) nCenterY = nY1; //범위 밖이면 시작 좌표
-	} while (!isInArea(nCenterX, nCenterY, nRadius)); //좌표값이 영역 안이 아니면 다시 값 설정
-	std::cout << "원의 중앙 좌표 : " << nCenterX << ", " << nCenterY << std::endl;
-	m_pImgDlg->loadImage(nCenterX, nCenterY);
-}
-bool CmfcExamPjDlg::isValidX(int x)
+
+bool CmfcExamPjDlg::isValidX(int x, int nRadius)
 {
 	int nWidth = m_pImgDlg->m_image.GetWidth();
-	return x <= nWidth;
+	return (x >= nRadius) && (x <= nWidth - nRadius); //완전한 원이 그려지기 위한 범위
 }
-bool CmfcExamPjDlg::isValidY(int y)
+bool CmfcExamPjDlg::isValidY(int y, int nRadius)
 {
 	int nHeight = m_pImgDlg->m_image.GetHeight();
-	return y <= nHeight;
+	return (y >= nRadius) && (y <= nHeight - nRadius);
 }
